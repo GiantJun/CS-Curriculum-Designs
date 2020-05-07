@@ -1,0 +1,1169 @@
+#include <stdio.h>
+#include <conio.h>
+#include <graphics.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define key_null 0x3920
+#define key_up 0x4800
+#define key_down 0x5000
+#define key_left 0x4b00
+#define key_right 0x4d00
+#define key_enter 0x1c0d
+#define key_esc  0x11b
+
+
+struct student
+{
+  long number;
+  long traday;
+  long inday;
+  float money;
+  float left;
+  char  type[5];
+  int   times;
+  char  place[20];
+  struct student *p;
+};
+
+int check(int flagc[6],int n) /*判断选中了那个主菜单*/
+{
+  int i=0;
+
+  while(flagc[i]==0 && i<n)   /*搜索哪个flag是1*/
+    {
+	 i++;
+    }
+
+  if(i!=n)  return i;
+  else      return n;
+
+}
+
+int child_check(int flag[2][4],int k) /*k代表被选中的主菜单编号*/
+{
+  int i=0;
+  while(flag[k][i]==0 && i<4)
+    {
+       i++;
+    }
+  if(i!=4) return i;
+  else     return 4;
+}
+
+void menu(long Hi) /*菜单显示功能*/
+{
+    /*函数声明*/
+    struct student* data_load(long user,int b);
+    void data_delete(struct student *mhead);
+    void data_change(struct student *mhead);
+    void data_statistic(struct student* head);
+    struct student* data_sort(struct student* shead,int m,int n);
+    int data_judge(long enter);
+    void data_search(struct student *head,int a);
+    void data_print(struct student *head);
+    void  data_input();
+
+    int key;    /*控制必须按回车后才能显示子菜单*/
+    int i,j,sor;
+    int x,y,k,b,c; /*b对应主菜单，c对应子菜单*/
+    char main_menu[6][20]={"Search","Sort","Gather","Upload","Change","Delete"};
+    char child_menu[2][4][20]={"Fix_T","Unfix_T","Unfix_M","Deleted","Time","Amount","Times",""};
+    int flag[6]={0}; /*主菜单标记*/
+    int child_flag[2][4]={0};
+    struct student *list;
+    list=NULL;
+    textbackground(BLUE);
+    clrscr();
+    textmode(C80);
+    window(2,2,63,24);
+    textbackground(7);
+    clrscr();
+    window(3,3,62,23);
+    textbackground(1);
+    textcolor(15);
+    clrscr();
+    cprintf("\r\n\r\n\r\n\r\n\r\n\r\n            Please press [NULL] to start !");
+
+    window(72,1,80,25);
+    textbackground(7);
+    textcolor(4);
+    clrscr();
+    cprintf("\n M e n u \n");
+
+    for(i=0;i<6;i++) /*菜单栏排列*/
+      {
+	    window(73,4+3*i,80,4+3*i);
+	    textbackground(7);  /*原先背景色(灰色)黑字，后黑底白字*/
+	    textcolor(0);
+        clrscr();
+	    cprintf("%-s",main_menu[i]);
+      }
+    while(1)
+      {
+      k=bioskey(0);
+      switch(k)
+         {  case key_null: /*按下空格表示选定菜单操作*/
+                           window(64,1,71,25);
+                           textbackground(1);
+                           clrscr();
+
+                           flag[0]=1;
+                           window(73,4,80,4);
+                           textbackground(0);
+                           textcolor(15);
+                           clrscr();
+                           cprintf("%s",main_menu[0]);
+                           key=0;
+                           break;
+
+		 case key_up:    b=check(flag,6); /*被选中的主菜单编号*/
+                         if(key==0)
+					 {if(b==6) break; /*没有选中任何菜单*/
+                           else
+                            { if(b>0) /*不是主菜单的最后一项*/
+                                {flag[b]=0;
+                                 flag[b-1]=1;
+                                 window(73,4+3*b,80,4+3*b);
+                                 textbackground(7);
+                                 textcolor(0);
+                                 clrscr();
+                                 cprintf("%s",main_menu[b]);
+                                 window(73,4+3*(b-1),80,4+3*(b-1));
+                                 textbackground(0);
+                                 textcolor(15);
+                                 clrscr();
+                                 cprintf("%s",main_menu[b-1]);
+                                }
+                              }
+                              break;
+                          }
+                         if(b>=0&&b<=1)
+                          {
+                            c=child_check(child_flag,b);
+					   if(c==4)  break;
+                            if(c==0) /*是子菜单的第一项*/
+                              { child_flag[b][0]=0;
+                                window(64,4+3*b+c,71,4+3*b+c);
+                                textbackground(7);
+                                textcolor(0);
+                                clrscr();
+                                cprintf("%s",child_menu[b][0]);
+                              }
+                             else
+                              {  if(c>0)
+                                   { child_flag[b][c]=0;
+                                     child_flag[b][c-1]=1;
+                                     window(64,4+3*b+c,71,4+3*b+c);
+                                     textbackground(7);
+                                     textcolor(0);
+                                     clrscr();
+                                     cprintf("%s",child_menu[b][c]);
+                                     window(64,4+3*b+c-1,71,4+3*b+c-1);
+                                     textbackground(0);
+                                     textcolor(15);
+                                     clrscr();
+                                     cprintf("%s",child_menu[b][c-1]);
+                                   }
+                               }
+                          break;
+                          }
+        case key_down:  b=check(flag,6); /*被选中的主菜单编号*/
+                     if(key==1)
+                        {if(b==6)  break; /*没有选中任何菜单*/
+                         if(b>=0&&b<=1) /*有被选中的菜单*/
+                          { c=child_check(child_flag,b);
+                            if(c==4) /*不是子菜单的最后一项*/
+                               { child_flag[b][0]=1;
+                                  window(64,4+3*b,71,4+3*b);
+                                  textbackground(0);
+                                  textcolor(15);
+                                  clrscr();
+                                  cprintf("%s",child_menu[b][0]);
+                               }
+                            else
+                               {  if(c<4-1)
+                                   {  child_flag[b][c]=0;
+                                      child_flag[b][c+1]=1;
+                                      window(64,4+3*b+c,71,4+3*b+c);
+                                      textbackground(7);
+                                      textcolor(0);
+                                      clrscr();
+                                      cprintf("%s",child_menu[b][c]);
+                                      window(64,4+3*b+c+1,71,4+3*b+c+1);
+                                      textbackground(0);
+                                      textcolor(15);
+                                      clrscr();
+                                      cprintf("%s",child_menu[b][c+1]);
+                                   }
+                               }
+                            break;
+                          }
+                        }
+                        else
+					 {  if(b==6) break; /*没有选中任何菜单*/
+                            else
+                            {
+                              if(b<6-1&&b>=0) /*不是主菜单的最后一项*/
+                                {flag[b]=0;
+                                 flag[b+1]=1;
+                                 window(73,4+3*b,80,4+3*b);
+                                 textbackground(7);
+                                 textcolor(0);
+                                 clrscr();
+                                 cprintf("%s",main_menu[b]);
+                                 window(73,4+3*(b+1),80,4+3*(b+1));
+                                 textbackground(0);
+                                 textcolor(15);
+                                 clrscr();
+                                 cprintf("%s",main_menu[b+1]);
+                                }
+                              }
+                              break;
+
+                          }
+       case key_right:   key=0; /*控制必须按回车后才能显示子菜单*/
+                         b=check(flag,6); /*被选中的主菜单编号*/
+                         window(64,4+3*b,71,4+3*b+4); /*隐藏掉上一次的子菜单*/
+                         textbackground(1);
+                         clrscr();
+					flag[b]=1;
+                         window(73,4+3*b,80,4+3*b);
+                         textbackground(0);
+                         textcolor(15);
+                         clrscr();
+                         cprintf("%s",main_menu[b]);
+
+                         break;
+
+       case key_enter:   b=check(flag,6); /*被选中的主菜单编号*/
+                         c=child_check(child_flag,b);
+                         if(b==6) break; /*没有选中任何菜单*/
+                         if(b>=0&&b<=1)
+                          { for(j=0;j<4;j++)  /*出现左拉菜单*/
+                            { window(64,4+3*b+j,71,4+3*b+j);
+                              textbackground(7);/*原先灰底黑字，选中后黑底白字*/
+                              textcolor(0);
+                              clrscr();
+                              printf("%s",child_menu[b][j]);
+                            }
+                          }
+                          /*********用户功能******************/
+                          if(Hi!=0)
+                         {
+                            if(b==2) /*统计功能*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                list=data_load(Hi,1);
+                                data_statistic(list);
+                                window(73,4+3*b,80,4+3*b);
+                                textbackground(7);
+                                textcolor(0);
+                                clrscr();
+                                cprintf("%s",main_menu[b]);
+                            }
+                            if(b==3) /*录入功能*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                window(2,2,63,24);
+                                textbackground(7);
+                                clrscr();
+                                window(3,3,62,23);
+                                textbackground(1);
+                                textcolor(15);
+                                clrscr();
+                                cprintf("\n\n\n\n\n    You have'n got this right!\r\n\r\n");
+
+                                cprintf("\r\n\r\n  If you want to do the other things Please Press [NULL] to back to the Menu.\r\n");
+                                cprintf("  If you want to leave,Please press [ESC] to leave.");
+
+                                window(73,4+3*b,80,4+3*b);
+                                textbackground(7);
+                                textcolor(0);
+                                clrscr();
+                                cprintf("%s",main_menu[b]);
+                            }
+                            if(b==4) /*修改数据功能*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                window(2,2,63,24);
+                                textbackground(7);
+                                clrscr();
+                                window(3,3,62,23);
+                                textbackground(1);
+                                textcolor(15);
+                                clrscr();
+                                cprintf("\n\n\n\n\n    You have'n got this right!\r\n\r\n");
+
+                                cprintf("\r\n\r\n  If you want to do the other things Please Press [NULL] to back to the Menu.\r\n");
+                                cprintf("  If you want to leave,Please press [ESC] to leave.");
+
+                                window(73,4+3*b,80,4+3*b);
+                                textbackground(7);
+                                textcolor(0);
+                                clrscr();
+                                cprintf("%s",main_menu[b]);
+                            }
+                            if(b==5) /*删除功能*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                window(2,2,63,24);
+                                textbackground(7);
+                                clrscr();
+                                window(3,3,62,23);
+                                textbackground(1);
+                                textcolor(15);
+                                clrscr();
+                                cprintf("\n\n\n\n\n    You have'n got this right!\r\n\r\n");
+
+                                cprintf("\r\n\r\n  If you want to do the other things Please Press [NULL] to back to the Menu.\r\n");
+                                cprintf("  If you want to leave,Please press [ESC] to leave.");
+
+                                window(73,4+3*b,80,4+3*b);
+                                textbackground(7);
+                                textcolor(0);
+                                clrscr();
+                                cprintf("%s",main_menu[b]);
+                            }
+                            if(b==0&&c==0&&key==1) /*查找功能中的按固定时间查询*/
+                            {
+                               window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                               list=data_load(Hi,1);
+                               data_search(list,3);
+
+                            }
+                            if(b==0&&c==1&&key==1) /*查询功能呢中的自定义时间查询*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                list=data_load(Hi,1);
+                                data_search(list,1);
+                            }
+                            if(b==0&&c==2&&key==1) /*查询功能中，自定金额查询*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                list=data_load(Hi,1);
+                                data_search(list,2);
+                            }
+                            if(b==0&&c==3&&key==1) /*查询功能，查询删除了的数据*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                window(73,4+3*b,80,4+3*b);
+                                textbackground(7);
+                                textcolor(0);
+                                clrscr();
+                                cprintf("%s",main_menu[b]);
+                                window(2,2,63,24);
+                                textbackground(7);
+                                clrscr();
+                                window(3,3,62,23);
+                                textbackground(1);
+                                textcolor(15);
+                                clrscr();
+                                cprintf("\n\n\n\n\n    You have'n got this right!\r\n\r\n");
+
+                                cprintf("\r\n\r\n  If you want to do the other things Please Press [NULL] to back to the Menu.\r\n");
+                                cprintf("  If you want to leave,Please press [ESC] to leave.");
+
+
+
+                            }
+                            if(b==1&&(c>=0&&c<=2)&&key==1) /*排序功能，按时间、金额、次数*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                window(2,2,63,24);
+                                textbackground(7);
+                                clrscr();
+                                window(3,3,62,23);
+                                textbackground(1);
+                                textcolor(15);
+                                clrscr();
+
+                                cprintf("  If you want Ascending Order(from small to big),Please input 0\r\n");
+                                cprintf("  If you want Descending Order (from big to small),Please input 1\r\n");
+                                scanf("%d",&sor);
+                                while(sor!=0&&sor!=1)
+                                {
+						    cprintf("\r\nPlease enter again!\r\n");
+                                  scanf("%d",&sor);
+                                }
+                                list=data_load(Hi,1);
+                                list=data_sort(list,sor,c+1);
+                                data_print(list);
+                                cprintf("\r\n\r\n  If you want to do the other things Please Press [Enter] back to the Menu.\r\n");
+                                cprintf("  If you want to leave,Please press [ESC] to leave the application.");
+                                getchar();
+                                getchar();
+                            }
+
+                         }
+                         if(Hi==0)
+                         {
+                           if(b==2) /*统计功能*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                list=data_load(Hi,2);
+                                data_statistic(list);
+                                window(73,4+3*b,80,4+3*b);
+                                textbackground(7);
+                                textcolor(0);
+                                clrscr();
+                                cprintf("%s",main_menu[b]);
+                            }
+                            if(b==3) /*录入功能*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+
+                                data_input();
+                                window(73,4+3*b,80,4+3*b);
+                                textbackground(7);
+                                textcolor(0);
+                                clrscr();
+                                cprintf("%s",main_menu[b]);
+                            }
+                            if(b==4) /*修改数据功能*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+
+                                list=data_load(Hi,2);
+                                data_change(list);
+
+                                window(73,4+3*b,80,4+3*b);
+                                textbackground(7);
+                                textcolor(0);
+                                clrscr();
+                                cprintf("%s",main_menu[b]);
+                            }
+                            if(b==5) /*删除功能*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+
+                                list=data_load(Hi,2);
+                                data_delete(list);
+
+                                window(73,4+3*b,80,4+3*b);
+                                textbackground(7);
+                                textcolor(0);
+                                clrscr();
+                                cprintf("%s",main_menu[b]);
+                            }
+                            if(b==0&&c==0&&key==1) /*查找功能中的按固定时间查询*/
+                            {
+                               window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                               list=data_load(Hi,2);
+                               data_search(list,3);
+
+                            }
+                            if(b==0&&c==1&&key==1) /*查询功能呢中的自定义时间查询*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                list=data_load(Hi,2);
+                                data_search(list,1);
+                            }
+                            if(b==0&&c==2&&key==1) /*查询功能中，自定金额查询*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                list=data_load(Hi,2);
+                                data_search(list,2);
+                            }
+                            if(b==0&&c==3&&key==1) /*查询功能，查询删除了的数据*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                list=data_load(Hi,3);
+                                data_search(list,4);
+
+
+                            }
+                            if(b==1&&(c>=0&&c<=2)&&key==1) /*排序功能，按时间、金额、次数*/
+                            {
+                                window(1,1,63,25);
+                                textbackground(1);
+                                clrscr();
+                                window(2,2,63,24);
+                                textbackground(7);
+                                clrscr();
+                                window(3,3,62,23);
+                                textbackground(1);
+                                textcolor(15);
+                                clrscr();
+
+                                cprintf("  If you want Ascending Order(from small to big),Please input 0\r\n");
+                                cprintf("  If you want Descending Order (from big to small),Please input 1\r\n");
+                                scanf("%d",&sor);
+                                while(sor!=0&&sor!=1)
+                                {
+						    cprintf("\r\nPlease enter again!\r\n");
+                                  scanf("%d",&sor);
+                                }
+                                list=data_load(Hi,2);
+                                list=data_sort(list,sor,c+1);
+                                data_print(list);
+                                cprintf("\r\n\r\n  If you want to do the other things Please Press [Enter] back to the Menu.\r\n");
+                                cprintf("  If you want to leave,Please press [ESC] to leave the application.");
+                                getchar();
+
+                            }
+
+                         }
+
+
+
+                         key=1;/*控制必须按回车后才能显示子菜单*/
+
+
+                         break;
+       case key_esc:     return;/*按ESC键退出*/
+      }
+     }
+}
+
+void data_delete(struct student *mhead) /*删除功能*/
+{
+   int i=0;
+   struct student *pc1,*pc2;
+   FILE *fps,*de;
+   long a,date;
+   char ch;
+
+  pc2=pc1=mhead;
+
+  if( (fps=fopen("fee.txt","w"))==NULL)       /*打开数据文件*/
+    {cprintf("can not open a file!\a");getchar();exit(0);}
+  if( (de=fopen("fee_undel.dat","a+"))==NULL)       /*打开保存删除数据的数据文件*/
+    {cprintf("can not open a file!\a");getchar();exit(0);}
+
+    window(2,2,63,24);
+    textbackground(7);
+    clrscr();
+    window(3,3,62,23);
+    textbackground(1);
+    textcolor(15);
+    clrscr();
+
+  cprintf("\r\n  Please enter the student number belongs to the data you want to DELETE:\r\n");
+  scanf("%ld",&a);
+  cprintf("  Please enter the DATE of the data:\r\n");
+  scanf("%ld",&date);
+
+  while(pc1!=NULL)
+    {
+      if(pc1->number==a&&pc1->inday==date)
+	   {i=1;break;}
+      pc2=pc1;
+      pc1=pc1->p;
+    }
+  if(i==1)
+  {  cprintf("\r\n   TradeDate EntryDate Amount  Left   Mode Times Place\r\n");
+    cprintf("\r\n %-10ld%-10ld%4.2f  %4.2f %5s%4d   %-s\r\n",pc1->traday,pc1->inday,pc1->money,pc1->left,pc1->type,pc1->times,pc1->place);
+    cprintf("\r\n  If you really want to delete this data please press 'Y'!\r\n  If not ,please press any key to continue!\r\n");
+    getchar();
+    ch=getchar();
+    if(ch=='y'||ch=='Y')
+    {
+	   fwrite(pc1,sizeof(struct student),1,de);
+
+	   if(pc1==mhead)  mhead=pc1->p;
+        else  pc2->p=pc1->p;
+        free(pc1);
+        pc1=mhead;
+        while(pc1!=NULL)
+        {
+		fprintf(fps,"%ld,%ld,%ld,%f,%f,%s\n%d,%s\n",pc1->number,pc1->traday,pc1->inday,pc1->money,pc1->left,pc1->type,pc1->times,pc1->place);
+          pc1=pc1->p;
+        }
+        cprintf("\r\n  Succeed !\r\n");
+    }
+    else {goto HY;}
+  }
+  else
+  {
+	cprintf("  Can not find the data!");
+  }
+  fclose(fps);
+  fclose(de);
+  HY:
+  cprintf("\r\n\r\n\r\n\r\n  If you want to do the other things Please Press [NULL] to back to the Menu.\r\n");
+  cprintf("  If you want to leave,Please press [ESC] to leave.");
+
+}
+
+void data_change(struct student *mhead)/*改动数据*/
+{
+   int i=0;
+   struct student *pc1;
+   FILE *fps;
+   long a,date;
+  pc1=mhead;
+
+  if( (fps=fopen("fee.txt","w"))==NULL)       /*打开数据文件*/
+    {cprintf("can not open a file!\a");getchar();exit(0);}
+
+    window(2,2,63,24);
+    textbackground(7);
+    clrscr();
+    window(3,3,62,23);
+    textbackground(1);
+    textcolor(15);
+    clrscr();
+
+  cprintf("\r\n  Please enter the student number belongs to the data you want to change:\r\n");
+  scanf("%ld",&a);
+  cprintf("  Please enter the date of the data:\r\n");
+  scanf("%ld",&date);
+
+  while(pc1!=NULL)
+    {
+      if(pc1->number==a&&pc1->inday==date)
+	   {i=1;break;}
+      pc1=pc1->p;
+    }
+  if(i==1)
+  { cprintf("\r\n   TradeDate EntryDate Amount  Left   Mode Times Place\r\n");
+    cprintf("\r\n %-10ld%-10ld%4.2f  %4.2f %5s%4d   %-s\r\n",pc1->traday,pc1->inday,pc1->money,pc1->left,pc1->type,pc1->times,pc1->place);
+    cprintf("  Please re-type all the data!\r\n");
+  cprintf("  Plese enter the Trade Date: (For Example: 20180101)\r\n");
+      scanf("%ld",&pc1->traday);
+      while(data_judge(pc1->traday)!=1)
+      {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+       scanf("%ld",&pc1->traday);
+      }
+
+	  cprintf("  Plese enter the Inday: (For Example: 20180101)\r\n");
+	  scanf("%ld",&pc1->inday);
+      while(data_judge(pc1->inday)!=1)
+      {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+       scanf("%ld",&pc1->inday);
+      }
+	  cprintf("  Please enter Amount: \r\n");
+	  scanf("%f",&pc1->money);
+	  cprintf("  Please enter the Left: \r\n");
+	  scanf("%f",&pc1->left);
+      cprintf("  Please enter the Mode: (For Example: pos\cash)\r\n");
+	  scanf("%s",pc1->type);
+	  while(strcmp(pc1->type,"pos")!=0 && strcmp(pc1->type,"cash")!=0)
+        {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+         scanf("%s",pc1->type);
+        }
+	  cprintf("  Please enter the Frequency: \r\n");
+	  scanf("%d",&pc1->times);
+	  cprintf("  Please enter the Place: (For Example :GuangZhou)\r\n");
+	  scanf("%s",pc1->place);
+      cprintf("\r\nSucceed!!");
+      pc1=mhead;
+      while(pc1!=NULL)
+      {
+		fprintf(fps,"%ld,%ld,%ld,%f,%f,%s\n%d,%s\n",pc1->number,pc1->traday,pc1->inday,pc1->money,pc1->left,pc1->type,pc1->times,pc1->place);
+          pc1=pc1->p;
+      }
+  }
+  else
+  {
+	cprintf("  Can not find the data!");
+  }
+  fclose(fps);
+  cprintf("\r\n\r\n     Change Finished!!\r\n\r\n");
+  cprintf("\r\n\r\n\r\n\r\n  If you want to do the other things Please Press [NULL] to back to the Menu.\r\n");
+  cprintf("  If you want to leave,Please press [ESC] to leave the application.");
+
+}
+
+void data_statistic(struct student* head) /*数据统计*/
+{
+   int nums=0;
+   float smoney=0,maxm=0;
+   long max,time1,time2;
+   struct student* pst;
+   pst=head;
+
+    window(2,2,63,24);
+    textbackground(7);
+    clrscr();
+    window(3,3,62,23);
+    textbackground(1);
+    textcolor(15);
+    clrscr();
+
+   cprintf("Please enter the Time Period you want to Statistic :\r\n");
+      do
+        { cprintf("  From: ");
+          scanf("%ld",&time1);
+          while(data_judge(time1)!=1)
+            {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+               scanf("%ld",&time1);
+            }
+          cprintf("  To: ");
+          scanf("%ld",&time2);
+          while(data_judge(time2)!=1)
+            {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+               scanf("%ld",&time2);
+            }
+          if(time1>time2) printf("  The Time Period you enterde is ilogical! Plese enter again!\r\n");
+        }while(time1>time2);
+
+      while(pst!=NULL)
+        {
+          if(pst->inday>=time1&&pst->inday<=time2)
+             { nums++;
+               smoney+=pst->money;
+               if(pst->money>maxm) maxm=pst->money,max=pst->traday;
+             }
+          pst=pst->p;
+        }
+      if(nums==0)  cprintf("  It is inexistent!");
+      else
+        {
+          cprintf("\r\n  In this time period\r\n");
+          cprintf("  The total Amount is %5.2f\r\n",smoney);
+          cprintf("  The average Amount of each day is %5.2f\r\n",smoney/nums);
+          cprintf("  You spent the most in %ld ,the Amount is %5.2f\r\n",max,maxm);
+        }
+
+      cprintf("\r\n\r\n  If you want to do the other things Please Press [Enter] to back to the Menu.\r\n");
+      cprintf("  If you want to leave,Please press [ESC] to leave the application.");
+}
+
+struct student *data_sort(struct student* shead,int m,int n)/*排序功能，n为1对日期，n为2对金额，n为3对次数*/
+{                                       /*排序功能，m为0按升序，m为1按降序*/
+   struct student c,*ps1,*ps2,*pc;
+   int i,j,num=0;
+
+   ps1=ps2=shead;
+   while(ps1!=NULL)
+     {
+        num++;
+        ps1=ps1->p;
+     }
+    ps1=shead;
+   if(m==0&&n==1)
+   { for(i=0;i<num-1;i++)
+       { if(i>0) ps2=ps1=ps1->p;
+         for(j=i;j<num;j++)
+           {
+             if(ps1->traday>ps2->traday)
+               c=*ps1,*ps1=*ps2,*ps2=c,pc=ps1->p,ps1->p=ps2->p,ps2->p=pc;
+             ps2=ps2->p;
+           }
+       }
+   }
+   if(m==0&&n==2)
+   { for(i=0;i<num-1;i++)
+       { if(i>0) ps2=ps1=ps1->p;
+         for(j=i;j<num;j++)
+           {
+             if(ps1->money>ps2->money)
+               c=*ps1,*ps1=*ps2,*ps2=c,pc=ps1->p,ps1->p=ps2->p,ps2->p=pc;
+             ps2=ps2->p;
+           }
+       }
+   }
+   if(m==0&&n==3)
+   { for(i=0;i<num-1;i++)
+       { if(i>0) ps2=ps1=ps1->p;
+         for(j=i;j<num;j++)
+           {
+             if(ps1->times>ps2->times)
+               c=*ps1,*ps1=*ps2,*ps2=c,pc=ps1->p,ps1->p=ps2->p,ps2->p=pc;
+             ps2=ps2->p;
+           }
+       }
+   }
+   if(m==1&&n==1)
+   { for(i=0;i<num-1;i++)
+       { if(i>0) ps2=ps1=ps1->p;
+         for(j=i;j<num;j++)
+           {
+             if(ps1->traday<ps2->traday)
+               c=*ps1,*ps1=*ps2,*ps2=c,pc=ps1->p,ps1->p=ps2->p,ps2->p=pc;
+             ps2=ps2->p;
+           }
+       }
+   }
+   if(m==1&&n==2)
+   { for(i=0;i<num-1;i++)
+       { if(i>0) ps2=ps1=ps1->p;
+         for(j=i;j<num;j++)
+           {
+             if(ps1->money<ps2->money)
+               c=*ps1,*ps1=*ps2,*ps2=c,pc=ps1->p,ps1->p=ps2->p,ps2->p=pc;
+             ps2=ps2->p;
+           }
+       }
+   }
+   if(m==1&&n==3)
+   { for(i=0;i<num-1;i++)
+       { if(i>0) ps2=ps1=ps1->p;
+         for(j=i;j<num;j++)
+           {
+             if(ps1->times<ps2->times)
+               c=*ps1,*ps1=*ps2,*ps2=c,pc=ps1->p,ps1->p=ps2->p,ps2->p=pc;
+             ps2=ps2->p;
+           }
+       }
+   }
+   return shead;
+}
+
+int data_judge(long enter)  /*判断输入年月日是否符合格式*/
+{                          /*符合返回1，不符合返回-1*/
+   int day,month,year;
+   int a[12]={31,28,31,30,31,30,31,31,30,31,30,31};
+   day=enter%100;         /*提取年月日*/
+   month=enter%10000/100;
+   year=enter/10000;
+
+   if(year<0) return -1; /*判别年*/
+
+   if(month<=0||month>12) return -1;/*判别月*/
+
+   if((month==2)&&(year%4==0)) a[1]=29; /*判断日*/
+   if(day>a[month-1]||day<0)  return -1;
+   else return 1;
+}
+
+void data_search(struct student *head,int a)/*用户的查询功能,1代表按时间段查询*/
+{                                    /*2代表按金额查询,3代表按上下学期查询,4查询删除记录*/
+  struct student* ps;
+  int i=0; /*i用于判断要查找的数据是否存在 */
+  ps=head;
+
+    window(2,2,63,24);
+    textbackground(7);
+    clrscr();
+    window(3,3,62,23);
+    textbackground(1);
+    textcolor(15);
+    clrscr();
+
+  if(a==1)  /*按自定义时间段查询 */
+  {   long time1,time2;
+      do
+      { cprintf("Please enter the Time Period you want to search:\r\n");
+        cprintf("  From: ");
+        scanf("%ld",&time1);
+        while(data_judge(time1)!=1)
+          {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+           scanf("%ld",&time1);
+          }
+        cprintf("  To: ");
+        scanf("%ld",&time2);
+        while(data_judge(time2)!=1)
+          {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+           scanf("%ld",&time2);
+          }
+        if(time1>time2) cprintf("  The Time Period you enterde is ilogical! Plese enter again!\r\n");
+      }while(time1>time2);
+      cprintf("\r\n   TradeDate EntryDate Amount  Left   Mode Times Place\r\n");
+      while(ps!=NULL)
+        {
+          if(ps->inday>=time1&&ps->inday<=time2)
+             {cprintf("\r\n %-10ld%-10ld%4.2f  %4.2f %5s%4d   %-s\r\n",ps->traday,ps->inday,ps->money,ps->left,ps->type,ps->times,ps->place);
+              i=1;
+             }
+          ps=ps->p;
+        }
+      if(i==0)  cprintf(" It is inexistent!");
+  }
+  if(a==2)  /*按自定义金额段查询*/
+    { int amount;
+      cprintf("  Plese enter the Amount Period you want to search:\r\n");
+      cprintf("  From: ");
+      scanf("%d",&amount);
+      cprintf("  To: ");
+      scanf("%d",&amount);
+      cprintf("\r\n   TradeDate EntryDate Amount  Left   Mode Times Place\r\n");
+      while(ps!=NULL)
+        {
+          if(ps->money>=amount && ps->money<=amount)
+             {cprintf("\r\n %-10ld%-10ld%4.2f  %4.2f %5s%4d   %-s\r\n",ps->traday,ps->inday,ps->money,ps->left,ps->type,ps->times,ps->place);
+             i=1;
+             }
+          ps=ps->p;
+        }
+       if(i==0)  cprintf("  It is inexistent!!");
+    }
+  if(a==3)       /*按固定时间段（上下学期）查询*/
+    {  char jud; int num;
+
+       cprintf("  Please enter F(Stand for the First Term) or L (Stand for the Last Term):\r\n");
+
+       scanf("%c",&jud);
+       getchar();
+       while(jud!='L'&&jud!='F') /*出现其他情况就回到之前重新输入*/
+       {
+           cprintf("  You have'n entered in a Wrong Way!Please enter again!\r\n\r\n\r\n");
+           scanf("%c",&jud);
+       }
+       if(jud=='F')
+          { cprintf("\r\n   TradeDate EntryDate Amount  Left   Mode Times Place\r\n");
+            while(ps!=NULL)
+              { num=ps->inday%10000;
+                if((num>900&&num<=1231)||(num>100&&num<=131))
+                   { cprintf("\r\n %-10ld%-10ld%4.2f  %4.2f %5s%4d   %-s\r\n",ps->traday,ps->inday,ps->money,ps->left,ps->type,ps->times,ps->place);
+                     i=1;
+                   }
+                ps=ps->p;
+              }
+            if(i==0)  cprintf("  It is inexistent!\r\n");
+
+          }
+       if(jud=='L')
+          {  cprintf("\r\n   TradeDate EntryDate Amount  Left   Mode Times Place\r\n");
+             while(ps!=NULL)
+              { num=ps->inday%10000;
+                if(num>300&&num<=630)
+                {cprintf("\r\n %-10ld%-10ld%4.2f  %4.2f %5s%4d   %-s\r\n",ps->traday,ps->inday,ps->money,ps->left,ps->type,ps->times,ps->place);
+                   i=1;
+                }
+                ps=ps->p;
+              }
+             if(i==0)  cprintf("  It is inexistent!\r\n");
+          }
+    }
+    if(a==4)
+    {  long time1,time2;
+      do
+      { cprintf("Please enter Deleted data's Time Period you want to search:\r\n");
+        cprintf("  From: ");
+        scanf("%ld",&time1);
+        while(data_judge(time1)!=1)
+          {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+           scanf("%ld",&time1);
+          }
+        cprintf("  To: ");
+        scanf("%ld",&time2);
+        while(data_judge(time2)!=1)
+          {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+           scanf("%ld",&time2);
+          }
+        if(time1>time2) cprintf("  The Time Period you enterde is ilogical! Plese enter again!\r\n");
+      }while(time1>time2);
+      cprintf("\r\n   TradeDate EntryDate Amount  Left   Mode Times Place\r\n");
+      while(ps!=NULL)
+        {
+          if(ps->inday>=time1&&ps->inday<=time2)
+             {cprintf("\r\n %-10ld%-10ld%4.2f  %4.2f %5s%4d   %-s\r\n",ps->traday,ps->inday,ps->money,ps->left,ps->type,ps->times,ps->place);
+              i=1;
+             }
+          ps=ps->p;
+        }
+      if(i==0)  cprintf("  It is inexistent!");
+
+    }
+
+   cprintf("\r\n\r\n  If you want to do the other things Please Press [Enter] to back to the Menu.\r\n");
+   cprintf("  If you want to leave,Please press [ESC] to leave the application.");
+}
+
+struct student* data_load(long user,int b)    /*从fee.txt文件中读取数据*/
+{            /*b为1时为正常载入单用户功能，2时则载入全部数据,3从fee_undel载入全部数据*/
+  FILE *fp;
+  float a1,a2;
+  struct student *head,*p1,*p2;
+  if(b==1||b==2)
+   {
+    if( (fp=fopen("fee.txt","r"))==NULL)       /*打开数据文件*/
+    {cprintf("Can not open a file!\a");getchar();exit(0);}
+
+    head=p2=p1=(struct student*)malloc(sizeof(struct student));
+
+    while(!feof(fp))
+    {
+        fscanf(fp,"%ld,%ld,%ld,%f,%f,%s\n%d,%s\n",&p1->number,&p1->traday,&p1->inday,&a1,&a2,p1->type,&p1->times,p1->place);
+        p1->money=a1,p1->left=a2;
+        if(p1->number==user&&b==1)
+        {  p1->p=(struct student*)malloc(sizeof(struct student));
+           p2=p1;
+           p1=p1->p;
+        }
+        if(b==2)
+        {  p1->p=(struct student*)malloc(sizeof(struct student));
+           p2=p1;
+           p1=p1->p;
+        }
+    }
+    free(p1);
+    p1=p2->p=NULL;
+    fclose(fp);
+    return head;
+   }
+   if(b==3)
+   {
+     if( (fp=fopen("fee_undel.dat","r"))==NULL)       /*打开fee_undel数据文件*/
+    {cprintf("Can not open a file!\a");getchar();exit(0);}
+
+     head=p2=p1=(struct student*)malloc(sizeof(struct student));
+     while(!feof(fp))
+    {  fread(p1,sizeof(struct student),1,fp);
+       p1->p=(struct student*)malloc(sizeof(struct student));
+       p2=p1;
+       p1=p1->p;
+    }
+    free(p1);
+    p1=p2->p=NULL;
+    fclose(fp);
+    return head;
+   }
+}
+
+void data_print(struct student *head)  /*数据输出屏幕的函数*/
+{
+  struct student *pp;
+  pp=head;
+  cprintf("\r\n TradeDate EntryDate Amount  Left   Mode Times Place\r\n");
+  while(pp!=NULL)
+    {
+	  cprintf("\r\n %-10ld%-10ld%4.2f  %4.2f %5s%4d   %-s\r\n",pp->traday,pp->inday,pp->money,pp->left,pp->type,pp->times,pp->place);
+       pp=pp->p;
+    }
+}
+
+void  data_input()   /*输入数据的函数*/
+{
+   struct student *p1,*p2;
+   int i,num;
+   FILE *fps;
+
+
+    window(2,2,63,24);
+    textbackground(7);
+    clrscr();
+    window(3,3,62,23);
+    textbackground(1);
+    textcolor(15);
+    clrscr();
+
+  cprintf("Please enter the number of data you want to enter!\r\n");
+  scanf("%d",&num);
+
+  p2=p1=(struct student*)malloc(sizeof(struct student));
+
+  if( (fps=fopen("fee.txt","a+"))==NULL)       /*打开数据文件*/
+    {cprintf("Can not open a file!\a");getchar();exit(0);}
+
+  cprintf("  Plese enter the Student Number:\r\n");                 /*开始输入*/
+  scanf("%ld",&p1->number);
+  for(i=0;i<num;i++)
+    { if(i>0) p2->number=p1->number;   /*学生学号赋值*/
+
+      cprintf("  Plese enter the Trade Date: (For Example: 20180101)\r\n");
+      scanf("%ld",&p1->traday);
+      while(data_judge(p1->traday)!=1)
+      {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+       scanf("%ld",&p1->traday);
+      }
+
+	  cprintf("  Plese enter the Inday: (For Example: 20180101)\r\n");
+	  scanf("%ld",&p1->inday);
+      while(data_judge(p1->inday)!=1)
+      {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+       scanf("%ld",&p1->inday);
+      }
+	  cprintf("  Please enter Amount: \r\n");
+	  scanf("%f",&p1->money);
+	  cprintf("  Please enter the Left: \r\n");
+	  scanf("%f",&p1->left);
+      cprintf("  Please enter the Mode: (For Example: pos\\cash)\r\n");
+	  scanf("%s",p1->type);
+	  while(strcmp(p1->type,"pos")!=0 && strcmp(p1->type,"cash")!=0)
+        {cprintf("  You have'n entered in a Right Way!Please enter again!\r\n");
+         scanf("%s",p1->type);
+        }
+	  cprintf("  Please enter the Frequency: \r\n");
+	  scanf("%d",&p1->times);
+	  cprintf("  Please enter the Place: (For Example :GuangZhou)\r\n");
+	  scanf("%s",p1->place);
+      cprintf("\r\n");
+	  fprintf(fps,"%ld,%ld,%ld,%f,%f,%s\n%d,%s\n",p1->number,p1->traday,p1->inday,p1->money,p1->left,p1->type,p1->times,p1->place);
+
+	  p1->p=(struct student*)malloc(sizeof(struct student));
+	  p2=p1;
+	  p1=p1->p;
+	}
+  free(p1);
+  p2->p=NULL;
+
+  fclose(fps);
+  cprintf("\r\n\r\n        Upload Succeed!!\r\n");
+  cprintf("\r\n\r\n  If you want to do the other things Please Press [Enter] to back to the Menu.\r\n");
+  cprintf("  If you want to leave,Please press [ESC] to leave the application.") ;
+}
+
+long easy_menu()
+{ long s=0;
+ printf("\n");
+ printf("\n");
+ printf("\n");
+ printf("             **************************************************\n");
+ printf("             **************************************************\n");
+ printf("             **                                              **\n");
+ printf("             **     W  E  L  L  E  C O  M  E  !!!            **\n");
+ printf("             **                                              **\n");
+ printf("             **      To  use  this application!!             **\n");
+ printf("             **                                              **\n");
+ printf("             **                                              **\n");
+ printf("             **                                              **\n");
+ printf("             ** If you are student ,please enter your number **\n");
+ printf("             ** If you are manager ,please enter 0           **\n");
+ printf("             **                                              **\n");
+ printf("             ** From The Maker Of This application           **\n");
+ printf("             **                               ----Huang YuJu **\n");
+ printf("             **************************************************\n");
+ printf("             **************************************************\n");
+ printf("\n");
+ printf("\n");
+
+ scanf("%ld",&s);
+
+
+
+
+ return s;
+}
+
+int main()
+{
+  long Huang;
+
+  textbackground(0);
+  textcolor(15);
+  clrscr();
+
+  Huang=easy_menu();
+  menu(Huang);
+  getchar();
+  return 0;
+}
+
